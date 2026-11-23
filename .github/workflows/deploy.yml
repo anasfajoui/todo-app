@@ -1,0 +1,27 @@
+name: Deploy Todo
+
+on:
+  push:
+    branches: [main]
+    tags: ['**']
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.event.deleted == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Trigger the Todo deployment
+        env:
+          GH_TOKEN: ${{ secrets.CONFIG_REPO_TOKEN }}
+          TODO_ENVIRONMENT: ${{ github.ref_type == 'tag' && 'production' || 'staging' }}
+        run: |
+          gh workflow run main.yml --repo anasfajoui/devops-with-kubernetes --ref main \
+            -f todo_commit="$(git rev-parse HEAD)" \
+            -f todo_environment="$TODO_ENVIRONMENT"
